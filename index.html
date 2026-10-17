@@ -1,0 +1,274 @@
+<title>Kōhō</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=JetBrains+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: cabecera tipo cartel con contador, barra de filtros, franja de anuncios y cuadrícula de fichas con color propio por título. */
+:root {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --fg: #13161f;
+  --muted: #566077;
+  --line: #d3d9e5;
+  --accent: #2f49e0;
+  --accent-fg: #ffffff;
+  --ok: #17794f;
+  --warn: #9a5b00;
+  --tile-s: 55%;
+  --tile-l: 86%;
+  --tile-fg-l: 24%;
+  --font-display: "Dela Gothic One", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1118; --surface: #171b25; --fg: #ebeef5; --muted: #9aa3b8; --line: #2a3042;
+    --accent: #92a3ff; --accent-fg: #0e1118; --ok: #5ed19a; --warn: #f0b35a;
+    --tile-s: 35%; --tile-l: 22%; --tile-fg-l: 82%;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1118; --surface: #171b25; --fg: #ebeef5; --muted: #9aa3b8; --line: #2a3042;
+  --accent: #92a3ff; --accent-fg: #0e1118; --ok: #5ed19a; --warn: #f0b35a;
+  --tile-s: 35%; --tile-l: 22%; --tile-fg-l: 82%;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-block: 0 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1120px; margin: 0 auto; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Cabecera */
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; padding-block: 28px 20px; border-bottom: 2px solid var(--fg); }
+.mark { font-family: var(--font-display); font-size: clamp(3rem, 14vw, 5.5rem); line-height: .9; margin: 0; letter-spacing: -.01em; }
+.kanji { font-family: var(--font-body); font-weight: 700; font-size: .9rem; color: var(--muted); letter-spacing: .3em; margin: 0 0 6px; }
+.counter { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); text-align: right; margin: 0; }
+.counter b { display: block; font-size: clamp(1.8rem, 7vw, 2.6rem); line-height: 1; color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Franja de anuncios */
+.band { padding-block: 22px 8px; }
+.band h2, .results-head h2 { font-family: var(--font-mono); font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+.strip { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; scroll-snap-type: x proximity; margin: 0; padding-inline: 0; list-style: none; }
+.strip li { flex: 0 0 min(240px, 70vw); scroll-snap-align: start; }
+.strip a { display: block; height: 100%; padding: 14px; border: 1px solid var(--line); background: var(--surface); color: inherit; text-decoration: none; }
+.strip a:hover { border-color: var(--accent); }
+.strip .kind { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.strip .name { display: block; font-weight: 700; margin-top: 4px; text-wrap: balance; }
+.strip .sub { display: block; font-size: .85rem; color: var(--muted); margin-top: 2px; }
+
+/* Controles */
+.controls { display: grid; gap: 12px; padding-block: 16px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.search { flex: 1 1 240px; min-width: 0; }
+input[type="search"], select { width: 100%; min-height: 44px; padding: 0 12px; font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+select { width: auto; min-width: 0; flex: 1 1 150px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: var(--surface); }
+.seg button { min-height: 44px; padding: 0 16px; font: inherit; font-weight: 500; color: var(--fg); background: transparent; border: 0; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 36px; padding: 0 12px; font: inherit; font-size: .85rem; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+
+/* Resultados */
+.results-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 8px; }
+.results-head h2 { margin: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 16px; margin: 16px 0 0; padding: 0; list-style: none; }
+.card { display: flex; flex-direction: column; min-width: 0; height: 100%; background: var(--surface); border: 1px solid var(--line); }
+.tile { position: relative; aspect-ratio: 16 / 7; max-width: 100%; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px 12px; background: hsl(var(--h) var(--tile-s) var(--tile-l)); color: hsl(var(--h) 40% var(--tile-fg-l)); }
+.tile .glyph { position: absolute; left: 10px; top: -14px; font-family: var(--font-display); font-size: 5.5rem; line-height: 1; opacity: .35; user-select: none; }
+.tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tag { position: relative; font-family: var(--font-mono); font-size: .68rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+.pill { position: relative; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
+.pill.nuevo { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.pill.curso { color: var(--ok); border-color: var(--ok); }
+.pill.aviso { color: var(--warn); border-color: var(--warn); }
+.body { display: flex; flex-direction: column; gap: 6px; padding: 14px; flex: 1; }
+.card h3 { font-size: 1.05rem; line-height: 1.25; margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
+.meta { font-family: var(--font-mono); font-size: .75rem; color: var(--muted); margin: 0; overflow-wrap: anywhere; }
+.syn { font-size: .9rem; margin: 0; color: var(--fg); }
+.genres { font-size: .8rem; color: var(--muted); margin: 0; }
+.card .src { margin-top: auto; padding-top: 8px; font-size: .85rem; font-weight: 700; color: var(--accent); text-decoration: none; }
+.card .src:hover { text-decoration: underline; }
+.more { display: block; margin: 28px auto 0; min-height: 48px; padding: 0 28px; font: inherit; font-weight: 700; color: var(--bg); background: var(--fg); border: 0; border-radius: 4px; cursor: pointer; }
+.empty, .note { text-align: center; color: var(--muted); padding: 32px 0 0; margin: 0; }
+.note { font-size: .85rem; padding-top: 40px; }
+.note code { font-family: var(--font-mono); font-size: .8rem; }
+@media (prefers-reduced-motion: no-preference) { .card, .strip a { transition: border-color .15s; } .card:hover { border-color: var(--accent); } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="kanji">広報 · ANIME Y MANGA</p>
+      <h1 class="mark">Kōhō</h1>
+    </div>
+    <p class="counter"><b id="total">0</b>fichas en el archivo</p>
+  </header>
+
+  <section class="band" aria-labelledby="band-title" id="band" hidden>
+    <h2 id="band-title">Anuncios</h2>
+    <ul class="strip" id="strip"></ul>
+  </section>
+
+  <section class="controls" aria-label="Filtros">
+    <div class="row">
+      <div class="search"><input id="q" type="search" placeholder="Buscar título, autor o estudio" aria-label="Buscar"></div>
+      <div class="seg" role="group" aria-label="Tipo">
+        <button type="button" data-tipo="todo" aria-pressed="true">Todo</button>
+        <button type="button" data-tipo="anime" aria-pressed="false">Anime</button>
+        <button type="button" data-tipo="manga" aria-pressed="false">Manga</button>
+      </div>
+    </div>
+    <div class="row">
+      <select id="estado" aria-label="Estado"><option value="">Cualquier estado</option></select>
+      <select id="orden" aria-label="Ordenar">
+        <option value="nuevo">Más recientes</option>
+        <option value="anio">Año de estreno</option>
+        <option value="nota">Mejor valorados</option>
+        <option value="az">A – Z</option>
+      </select>
+    </div>
+    <div class="chips" id="chips" aria-label="Géneros"></div>
+  </section>
+
+  <div class="results-head"><h2 id="count">Cargando</h2></div>
+  <ul class="grid" id="grid"></ul>
+  <button class="more" id="more" type="button" hidden>Mostrar más</button>
+  <p class="empty" id="empty" hidden>Ninguna ficha coincide con esos filtros.</p>
+  <p class="note" id="note" hidden></p>
+</div>
+
+<script>
+(function () {
+  var PAGE = 24;
+  var all = [], view = [], shown = 0;
+  var st = { q: "", tipo: "todo", estado: "", genero: "", orden: "nuevo" };
+  var $ = function (id) { return document.getElementById(id); };
+
+  function norm(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
+  function hue(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; }
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function fuente(a) { return a.f || ("https://anilist.co/search/" + a.tipo + "?search=" + encodeURIComponent(a.t)); }
+  function pillClass(e) { return e === "Anunciado" ? "nuevo" : e === "En curso" ? "curso" : (e === "Cancelado" || e === "En pausa") ? "aviso" : ""; }
+
+  function card(a) {
+    var li = el("li"), art = el("article", "card");
+    var tile = el("div", "tile");
+    tile.style.setProperty("--h", hue(a.t));
+    tile.appendChild(el("span", "glyph", a.t.charAt(0).toUpperCase()));
+    if (a.img) {
+      var im = el("img"); im.src = a.img; im.alt = ""; im.loading = "lazy";
+      im.addEventListener("error", function () { im.remove(); });
+      tile.appendChild(im);
+    }
+    tile.appendChild(el("span", "tag", a.tipo));
+    tile.appendChild(el("span", "pill " + pillClass(a.e), a.e));
+    var body = el("div", "body");
+    body.appendChild(el("h3", "", a.t));
+    var meta = [a.y, a.por].filter(Boolean).join(" · ");
+    if (a.n) meta += (meta ? " · " : "") + a.n + "/100";
+    if (meta) body.appendChild(el("p", "meta", meta));
+    if (a.s) body.appendChild(el("p", "syn", a.s));
+    if (a.g && a.g.length) body.appendChild(el("p", "genres", a.g.join(" · ")));
+    var link = el("a", "src", "Ver en AniList ↗");
+    link.href = fuente(a); link.target = "_blank"; link.rel = "noopener noreferrer";
+    body.appendChild(link);
+    art.appendChild(tile); art.appendChild(body); li.appendChild(art);
+    return li;
+  }
+
+  function sorter() {
+    var k = st.orden;
+    if (k === "az") return function (a, b) { return a.t.localeCompare(b.t, "es"); };
+    if (k === "anio") return function (a, b) { return (b.y || 0) - (a.y || 0); };
+    if (k === "nota") return function (a, b) { return (b.n || 0) - (a.n || 0); };
+    return function (a, b) { return a.a < b.a ? 1 : a.a > b.a ? -1 : a.i - b.i; };
+  }
+
+  function apply() {
+    var q = norm(st.q);
+    view = all.filter(function (a) {
+      if (st.tipo !== "todo" && a.tipo !== st.tipo) return false;
+      if (st.estado && a.e !== st.estado) return false;
+      if (st.genero && a.g.indexOf(st.genero) < 0) return false;
+      return !q || a._k.indexOf(q) >= 0;
+    }).sort(sorter());
+    $("grid").textContent = ""; shown = 0;
+    $("count").textContent = view.length.toLocaleString("es") + (view.length === 1 ? " ficha" : " fichas");
+    $("empty").hidden = view.length > 0;
+    more();
+  }
+
+  function more() {
+    var frag = document.createDocumentFragment(), end = Math.min(shown + PAGE, view.length);
+    for (var i = shown; i < end; i++) frag.appendChild(card(view[i]));
+    $("grid").appendChild(frag); shown = end;
+    var left = view.length - shown;
+    $("more").hidden = left <= 0;
+    $("more").textContent = "Mostrar más (" + left.toLocaleString("es") + " restantes)";
+  }
+
+  function setup() {
+    $("total").textContent = all.length.toLocaleString("es");
+    var estados = {}, generos = {};
+    all.forEach(function (a) { estados[a.e] = 1; a.g.forEach(function (g) { generos[g] = (generos[g] || 0) + 1; }); });
+    Object.keys(estados).sort().forEach(function (e) { var o = el("option", "", e); o.value = e; $("estado").appendChild(o); });
+    var top = Object.keys(generos).sort(function (a, b) { return generos[b] - generos[a]; }).slice(0, 14);
+    top.forEach(function (g) {
+      var b = el("button", "chip", g); b.type = "button"; b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () {
+        st.genero = st.genero === g ? "" : g;
+        Array.prototype.forEach.call($("chips").children, function (c) { c.setAttribute("aria-pressed", String(c.textContent === st.genero)); });
+        apply();
+      });
+      $("chips").appendChild(b);
+    });
+
+    var anun = all.filter(function (a) { return a.e === "Anunciado"; });
+    var lista = anun.length ? anun : all.slice().sort(sorter()).slice(0, 8);
+    $("band-title").textContent = anun.length ? "Anuncios" : "Últimas incorporaciones";
+    lista.slice(0, 12).forEach(function (a) {
+      var li = el("li"), l = el("a"); l.href = fuente(a); l.target = "_blank"; l.rel = "noopener noreferrer";
+      l.appendChild(el("span", "kind", a.tipo + (a.y ? " · " + a.y : "")));
+      l.appendChild(el("span", "name", a.t));
+      if (a.por) l.appendChild(el("span", "sub", a.por));
+      li.appendChild(l); $("strip").appendChild(li);
+    });
+    $("band").hidden = false;
+
+    if (all.length < 3000) {
+      $("note").hidden = false;
+      $("note").textContent = "Esta muestra tiene " + all.length + " fichas de ejemplo. Para llegar a 3000 o más, ejecuta actualizar.py (incluido con el sitio) y reemplaza data/articulos.json.";
+    }
+
+    var t = 0;
+    $("q").addEventListener("input", function (e) { clearTimeout(t); t = setTimeout(function () { st.q = e.target.value; apply(); }, 150); });
+    $("estado").addEventListener("change", function (e) { st.estado = e.target.value; apply(); });
+    $("orden").addEventListener("change", function (e) { st.orden = e.target.value; apply(); });
+    $("more").addEventListener("click", more);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-tipo]"), function (b) {
+      b.addEventListener("click", function () {
+        st.tipo = b.dataset.tipo;
+        Array.prototype.forEach.call(document.querySelectorAll("[data-tipo]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        apply();
+      });
+    });
+    apply();
+  }
+
+  fetch("data/articulos.json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+    all = d.map(function (a, i) { a.i = i; a.g = a.g || []; a._k = norm([a.t, a.por, a.s, a.g.join(" ")].join(" ")); return a; });
+    setup();
+  }).catch(function () {
+    $("count").textContent = "No se pudo cargar data/articulos.json";
+  });
+})();
+</script>

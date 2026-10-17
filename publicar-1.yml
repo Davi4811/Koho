@@ -1,0 +1,39 @@
+name: Actualizar y publicar Kōhō
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # todos los días a las 09:00 UTC
+  workflow_dispatch:       # botón manual en la pestaña Actions
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Descargar fichas nuevas (si falla, se usa el archivo existente)
+        run: python actualizar.py 3600 || echo "AniList no respondió, se mantiene data/articulos.json"
+      - name: Armar el sitio
+        run: python build.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4
